@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProductoDAOTest {
+
+    private static final int PRODUCTOS_EN_LA_BASE = 4;
 
     @Test
     void listaLosProductosDeLaBaseDeDatos() {
@@ -14,12 +16,6 @@ class ProductoDAOTest {
 
         List<ProductoModel> productos = productoDAO.listarTodos();
 
-        assertNotNull(productos);
-        productos.forEach(producto ->
-                System.out.printf("%d - %s - %.2f - cantidad: %d%n",
-                        producto.getId(),
-                        producto.getNombre(),
-                        producto.getPrecio(),
-                        producto.getCantidad()));
+        assertEquals(PRODUCTOS_EN_LA_BASE, productos.size());
     }
 }
