@@ -70,7 +70,9 @@ docs/
 
 ## Compilar y ejecutar
 
-> Se completa en [#1](../../issues/1) (estructura) y [#10](../../issues/10) (nivel 2).
+> Se completa en [#10](../../issues/10) (nivel 2).
+
+El proyecto se ejecuta desde la raíz(donde está `pom.xml`) ya que el archivo `ConexionDB` usa la ruta relativa `data/tienda.db`
 
 ```bash
 mvn clean compile
