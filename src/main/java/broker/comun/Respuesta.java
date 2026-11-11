@@ -6,12 +6,6 @@ import java.util.UUID;
 
 /**
  * Resultado de la ejecución de una {@link Solicitud}.
- *
- * @param idSolicitud identificador de la solicitud atendida
- * @param resultado resultado de la operación, si fue exitosa
- * @param estado estado de la ejecución
- * @param mensajeError detalle del error, si ocurrió
- * @param fechaHora fecha y hora de creación de la respuesta
  */
 public class Respuesta {
     private final UUID idSolicitud;

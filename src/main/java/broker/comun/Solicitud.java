@@ -7,12 +7,6 @@ import java.util.UUID;
 
 /**
  * Solicitud de un servicio realizada por un cliente.
- *
- * @param id identificador único de la solicitud
- * @param servicio nombre del servicio solicitado
- * @param operacion operación que debe ejecutar el servicio
- * @param parametros parámetros de la operación
- * @param fechaHora fecha y hora de creación de la solicitud
  */
 public class Solicitud {
     private final UUID id;
