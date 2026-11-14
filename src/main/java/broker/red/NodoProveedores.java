@@ -109,18 +109,27 @@ public final class NodoProveedores {
              BufferedWriter salida = new BufferedWriter(
                      new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
             socket.setSoTimeout(TIEMPO_LECTURA_MS);
-            Solicitud solicitud = new MarshallerJson().solicitudDesde(entrada.readLine());
-            Respuesta respuesta;
-            synchronized (accesoBaseDatos) {
-                respuesta = proveedor.ejecutar(solicitud);
-            }
-            salida.write(new MarshallerJson().aJson(respuesta));
+            MarshallerJson marshaller = new MarshallerJson();
+            Respuesta respuesta = responder(marshaller, entrada.readLine(), proveedor, accesoBaseDatos);
+            salida.write(marshaller.aJson(respuesta));
             salida.newLine();
             salida.flush();
-        } catch (IllegalArgumentException e) {
-            enviarError(conexion, e.getMessage());
         } catch (IOException e) {
             System.err.println("Error atendiendo " + servicio + ": " + describir(e));
+        }
+    }
+
+    private static Respuesta responder(MarshallerJson marshaller, String linea,
+                                       ProveedorServicio proveedor, Object accesoBaseDatos) {
+        Solicitud solicitud;
+        try {
+            solicitud = marshaller.solicitudDesde(linea);
+        } catch (IllegalArgumentException e) {
+            return Respuesta.error(UUID.randomUUID(), EstadoRespuesta.PARAMETRO_INVALIDO,
+                    e.getMessage() == null ? "Solicitud inválida" : e.getMessage());
+        }
+        synchronized (accesoBaseDatos) {
+            return proveedor.ejecutar(solicitud);
         }
     }
 
@@ -141,21 +150,6 @@ public final class NodoProveedores {
                 throw new IOException("No se pudo registrar " + servicio + ": "
                         + respuesta.getMensajeError());
             }
-        }
-    }
-
-    private static void enviarError(Socket conexion, String mensaje) {
-        try (Socket socket = conexion;
-             BufferedWriter salida = new BufferedWriter(
-                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
-            MarshallerJson marshaller = new MarshallerJson();
-            salida.write(marshaller.aJson(Respuesta.error(UUID.randomUUID(),
-                    EstadoRespuesta.PARAMETRO_INVALIDO,
-                    mensaje == null ? "Solicitud inválida" : mensaje)));
-            salida.newLine();
-            salida.flush();
-        } catch (IOException error) {
-            System.err.println("No se pudo responder el error: " + describir(error));
         }
     }
 
