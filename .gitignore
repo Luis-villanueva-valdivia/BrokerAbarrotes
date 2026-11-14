@@ -21,3 +21,6 @@ replay_pid*
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Bitácora generada por el broker
+/logs/broker.log

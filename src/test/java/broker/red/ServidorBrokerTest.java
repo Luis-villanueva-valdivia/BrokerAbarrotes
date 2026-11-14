@@ -1,0 +1,190 @@
+package broker.red;
+
+import broker.comun.EstadoRespuesta;
+import broker.comun.ProveedorServicio;
+import broker.comun.Respuesta;
+import broker.comun.Solicitud;
+import broker.proveedores.ServicioProductosMemoria;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ServidorBrokerTest {
+
+    private static final MarshallerJson MARSHALLER = new MarshallerJson();
+    private static final ProveedorServicio PROVEEDOR =
+            new ServicioProductosMemoria();
+    private static ServidorBroker broker;
+    private static Thread hiloBroker;
+    private static Thread hiloProveedor;
+    private static ServerSocket servidorProveedor;
+    private static ExecutorService ejecutorProveedor;
+
+    @BeforeAll
+    static void iniciarProcesos() throws Exception {
+        servidorProveedor = new ServerSocket(0);
+        ejecutorProveedor = Executors.newCachedThreadPool();
+        hiloProveedor = new Thread(ServidorBrokerTest::aceptarProveedores);
+        hiloProveedor.setDaemon(true);
+        hiloProveedor.start();
+        broker = new ServidorBroker();
+        hiloBroker = new Thread(() -> {
+            try {
+                broker.ejecutar();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        hiloBroker.setDaemon(true);
+        hiloBroker.start();
+        esperarBroker();
+    }
+
+    @AfterAll
+    static void detenerProcesos() throws IOException, InterruptedException {
+        if (broker != null) {
+            broker.close();
+        }
+        if (hiloBroker != null) {
+            hiloBroker.join(2000);
+        }
+        if (servidorProveedor != null) {
+            servidorProveedor.close();
+        }
+        if (ejecutorProveedor != null) {
+            ejecutorProveedor.shutdownNow();
+        }
+    }
+
+    @Test
+    void registraProveedorDespuesDeArrancarYAtiendeDosClientesEnParalelo() throws Exception {
+        registrarProveedor();
+        CountDownLatch clientesListos = new CountDownLatch(2);
+        CountDownLatch inicioSolicitudes = new CountDownLatch(1);
+        Future<Respuesta> respuestaClienteUno = enviarEnSegundoPlano(
+                clientesListos, inicioSolicitudes,
+                solicitudBuscar("Refresco"));
+        Future<Respuesta> respuestaClienteDos = enviarEnSegundoPlano(
+                clientesListos, inicioSolicitudes,
+                solicitudConsultar("NO-EXISTE"));
+        assertTrue(clientesListos.await(5, TimeUnit.SECONDS));
+        inicioSolicitudes.countDown();
+
+        Respuesta respuestaUno = respuestaClienteUno.get(5, TimeUnit.SECONDS);
+        Respuesta respuestaDos = respuestaClienteDos.get(5, TimeUnit.SECONDS);
+
+        assertEquals(EstadoRespuesta.EXITO, respuestaUno.getEstado());
+        assertTrue(respuestaUno.getResultado() instanceof List<?>);
+        assertTrue(!((List<?>) respuestaUno.getResultado()).isEmpty());
+
+        assertEquals(EstadoRespuesta.ERROR_PROVEEDOR, respuestaDos.getEstado());
+        assertEquals("producto no encontrado", respuestaDos.getMensajeError());
+    }
+
+    private static Future<Respuesta> enviarEnSegundoPlano(
+            CountDownLatch clientesListos, CountDownLatch inicioSolicitudes, Solicitud solicitud) {
+        return ejecutorProveedor.submit(() -> {
+            clientesListos.countDown();
+            if (!inicioSolicitudes.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Las solicitudes no iniciaron a tiempo");
+            }
+            return enviarSolicitudAlBroker(solicitud);
+        });
+    }
+
+    private static Respuesta enviarSolicitudAlBroker(Solicitud solicitud) throws IOException {
+        try (Socket socket = new Socket("localhost", ServidorBroker.PUERTO);
+             BufferedReader entrada = new BufferedReader(
+                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter salida = new BufferedWriter(
+                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
+            salida.write(MARSHALLER.aJson(solicitud));
+            salida.newLine();
+            salida.flush();
+            return MARSHALLER.respuestaDesde(entrada.readLine());
+        }
+    }
+
+    private static Solicitud solicitudBuscar(String nombre) {
+        return new Solicitud("productos", "buscar", Map.of("nombre", nombre));
+    }
+
+    private static Solicitud solicitudConsultar(String codigo) {
+        return new Solicitud("productos", "consultar", Map.of("codigo", codigo));
+    }
+
+    private static void registrarProveedor() throws IOException {
+        try (Socket socket = new Socket("localhost", ServidorBroker.PUERTO);
+             BufferedReader entrada = new BufferedReader(
+                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter salida = new BufferedWriter(
+                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
+            MensajeRegistro registro = new MensajeRegistro(
+                    MensajeRegistro.TIPO_REGISTRAR, "productos", "localhost", servidorProveedor.getLocalPort());
+            salida.write(MARSHALLER.aJson(registro));
+            salida.newLine();
+            salida.flush();
+            assertTrue(MARSHALLER.respuestaDesde(entrada.readLine()).getMensajeError() == null);
+        }
+    }
+
+    private static void esperarBroker() throws InterruptedException {
+        long limite = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < limite) {
+            try (Socket ignored = new Socket("localhost", ServidorBroker.PUERTO)) {
+                return;
+            } catch (IOException e) {
+                Thread.sleep(50);
+            }
+        }
+        throw new IllegalStateException("El broker no inició a tiempo");
+    }
+
+    private static void aceptarProveedores() {
+        try {
+            while (!servidorProveedor.isClosed()) {
+                Socket conexion = servidorProveedor.accept();
+                ejecutorProveedor.submit(() -> atenderProveedor(conexion));
+            }
+        } catch (IOException e) {
+            if (!servidorProveedor.isClosed()) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    private static void atenderProveedor(Socket conexion) {
+        try (Socket socket = conexion;
+             BufferedReader entrada = new BufferedReader(
+                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter salida = new BufferedWriter(
+                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
+            Solicitud solicitud = MARSHALLER.solicitudDesde(entrada.readLine());
+            Respuesta respuesta = PROVEEDOR.ejecutar(solicitud);
+            salida.write(MARSHALLER.aJson(respuesta));
+            salida.newLine();
+            salida.flush();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}
