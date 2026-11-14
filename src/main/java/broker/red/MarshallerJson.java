@@ -23,9 +23,10 @@ import java.util.UUID;
  * Convierte solicitudes, respuestas y mensajes de registro a JSON y de regreso.
  *
  * <p>Cada mensaje se escribe en una sola línea, para leerlo con {@code readLine()}
- * desde un socket. Un JSON vacío, mal formado o incompleto se reporta con
- * {@link IllegalArgumentException}, para que el broker lo convierta en una
- * respuesta PARAMETRO_INVALIDO en lugar de dejar escapar una excepción de Gson.</p>
+ * desde un socket. Un JSON vacío, mal formado, con tipos de datos incorrectos o con
+ * datos inválidos se reporta con {@link IllegalArgumentException}. La capa que integra
+ * este marshaller con la comunicación del broker debe convertir esa excepción en una
+ * respuesta PARAMETRO_INVALIDO.</p>
  */
 public class MarshallerJson {
 
@@ -68,7 +69,8 @@ public class MarshallerJson {
      *
      * @param json texto JSON producido por {@link #aJson(Solicitud)}
      * @return solicitud reconstruida con el mismo id, servicio, operación, parámetros y fecha
-     * @throws IllegalArgumentException si el JSON es vacío, está mal formado o le faltan campos
+     * @throws IllegalArgumentException si el JSON es vacío, está mal formado, tiene tipos de datos
+     *         incorrectos o le faltan campos obligatorios
      */
     public Solicitud solicitudDesde(String json) {
         SolicitudJson dto = leer(json, SolicitudJson.class);
@@ -106,7 +108,8 @@ public class MarshallerJson {
      *
      * @param json texto JSON producido por {@link #aJson(Respuesta)}
      * @return respuesta reconstruida
-     * @throws IllegalArgumentException si el JSON es vacío, está mal formado, tiene un estado desconocido o le faltan campos
+     * @throws IllegalArgumentException si el JSON es vacío, está mal formado, tiene tipos de datos
+     *         incorrectos, tiene un estado desconocido o le faltan campos
      */
     public Respuesta respuestaDesde(String json) {
         RespuestaJson dto = leer(json, RespuestaJson.class);
@@ -135,39 +138,45 @@ public class MarshallerJson {
     /**
      * Reconstruye un mensaje de registro dinámico a partir de su JSON.
      *
+     * <p>La validación de tipo, servicio, host y puerto la hace el constructor de
+     * {@link MensajeRegistro}, así que aquí solo se traduce su error al formato del marshaller.</p>
+     *
      * @param json texto JSON del mensaje
      * @return mensaje validado
-     * @throws IllegalArgumentException si el JSON es inválido, el tipo no es REGISTRAR,
-     *         faltan campos o el puerto no está entre 1 y 65535
+     * @throws IllegalArgumentException si el JSON es inválido, tiene tipos de datos incorrectos,
+     *         el tipo no es REGISTRAR, faltan campos o el puerto no está entre 1 y 65535
      */
     public MensajeRegistro registroDesde(String json) {
-        MensajeRegistro mensaje = leer(json, MensajeRegistro.class);
-        if (!MensajeRegistro.TIPO_REGISTRAR.equals(mensaje.tipo())) {
-            throw new IllegalArgumentException(MENSAJE_INVALIDO + "tipo de mensaje no soportado");
-        }
-        if (mensaje.servicio() == null || mensaje.servicio().isBlank()
-                || mensaje.host() == null || mensaje.host().isBlank()) {
-            throw new IllegalArgumentException(MENSAJE_INVALIDO + "faltan servicio o host");
-        }
-        if (mensaje.puerto() < MensajeRegistro.PUERTO_MINIMO || mensaje.puerto() > MensajeRegistro.PUERTO_MAXIMO) {
-            throw new IllegalArgumentException(MENSAJE_INVALIDO + "el puerto debe estar entre 1 y 65535");
-        }
-        return mensaje;
+        return leer(json, MensajeRegistro.class);
     }
 
+    /**
+     * Lee un JSON y lo convierte al tipo indicado. Cualquier fallo de Gson, de tipos
+     * de datos o de validación se traduce a IllegalArgumentException.
+     */
     private <T> T leer(String json, Class<T> tipo) {
         if (json == null || json.isBlank()) {
             throw new IllegalArgumentException(MENSAJE_INVALIDO + "el mensaje está vacío");
         }
+        T dto;
         try {
-            T dto = gson.fromJson(json, tipo);
-            if (dto == null) {
-                throw new IllegalArgumentException(MENSAJE_INVALIDO + "el mensaje está vacío");
-            }
-            return dto;
-        } catch (JsonParseException e) {
-            throw new IllegalArgumentException(MENSAJE_INVALIDO + e.getMessage(), e);
+            dto = gson.fromJson(json, tipo);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException(MENSAJE_INVALIDO + mensajeDe(e), e);
         }
+        if (dto == null) {
+            throw new IllegalArgumentException(MENSAJE_INVALIDO + "el mensaje está vacío");
+        }
+        return dto;
+    }
+
+    /** Devuelve el mensaje de la causa más profunda, para dar un error legible. */
+    private static String mensajeDe(Throwable error) {
+        Throwable causa = error;
+        while (causa.getCause() != null && causa.getCause() != causa) {
+            causa = causa.getCause();
+        }
+        return causa.getMessage() != null ? causa.getMessage() : "formato inválido";
     }
 
     /** Forma en JSON de una solicitud; Gson la llena por reflexión. */

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pruebas de ida y vuelta y de rechazo de JSON mal formado para MarshallerJson.
+ * Pruebas de ida y vuelta y de rechazo de JSON mal formado o con tipos incorrectos para MarshallerJson.
  */
 class MarshallerJsonTest {
 
@@ -127,5 +127,68 @@ class MarshallerJsonTest {
         String json = "{\"tipo\":\"REGISTRAR\",\"servicio\":\"productos\",\"host\":\"localhost\",\"puerto\":70000}";
 
         assertThrows(IllegalArgumentException.class, () -> marshaller.registroDesde(json));
+    }
+
+    @Test
+    void registroSinServicioDaIllegalArgument() {
+        String json = "{\"tipo\":\"REGISTRAR\",\"host\":\"localhost\",\"puerto\":6001}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.registroDesde(json));
+    }
+
+    @Test
+    void solicitudConIdNumericoDaIllegalArgument() {
+        String json = "{\"id\":123,\"servicio\":\"productos\",\"operacion\":\"consultar\","
+                + "\"parametros\":{},\"fechaHora\":\"2026-05-12T10:30:00\"}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.solicitudDesde(json));
+    }
+
+    @Test
+    void solicitudConParametrosComoTextoDaIllegalArgument() {
+        String json = "{\"id\":\"" + ID_DE_PRUEBA + "\",\"servicio\":\"productos\","
+                + "\"operacion\":\"consultar\",\"parametros\":\"codigo=CC001\",\"fechaHora\":\"2026-05-12T10:30:00\"}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.solicitudDesde(json));
+    }
+
+    @Test
+    void jsonQueNoEsObjetoDaIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> marshaller.solicitudDesde("[1,2,3]"));
+        assertThrows(IllegalArgumentException.class, () -> marshaller.solicitudDesde("\"texto\""));
+    }
+
+    @Test
+    void fechaConNumeroDaIllegalArgument() {
+        String json = "{\"id\":\"" + ID_DE_PRUEBA + "\",\"servicio\":\"productos\","
+                + "\"operacion\":\"consultar\",\"parametros\":{},\"fechaHora\":12}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.solicitudDesde(json));
+    }
+
+    @Test
+    void respuestaConIdNumericoDaIllegalArgument() {
+        String json = "{\"idSolicitud\":42,\"estado\":\"EXITO\"}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.respuestaDesde(json));
+    }
+
+    @Test
+    void registroConPuertoComoTextoDaIllegalArgument() {
+        String json = "{\"tipo\":\"REGISTRAR\",\"servicio\":\"productos\",\"host\":\"localhost\",\"puerto\":\"seis\"}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.registroDesde(json));
+    }
+
+    @Test
+    void registroConPuertoDecimalDaIllegalArgument() {
+        String json = "{\"tipo\":\"REGISTRAR\",\"servicio\":\"productos\",\"host\":\"localhost\",\"puerto\":6001.5}";
+
+        assertThrows(IllegalArgumentException.class, () -> marshaller.registroDesde(json));
+    }
+
+    @Test
+    void registroQueNoEsObjetoDaIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> marshaller.registroDesde("[\"REGISTRAR\"]"));
     }
 }
