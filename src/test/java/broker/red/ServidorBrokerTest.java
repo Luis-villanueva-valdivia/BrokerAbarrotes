@@ -1,7 +1,10 @@
 package broker.red;
 
+import broker.comun.EstadoRespuesta;
+import broker.comun.ProveedorServicio;
 import broker.comun.Respuesta;
 import broker.comun.Solicitud;
+import broker.proveedores.ServicioProductosMemoria;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ServidorBrokerTest {
 
     private static final MarshallerJson MARSHALLER = new MarshallerJson();
+    private static final ProveedorServicio PROVEEDOR =
+            new ServicioProductosMemoria();
     private static Thread hiloBroker;
     private static Thread hiloProveedor;
     private static ServerSocket servidorProveedor;
@@ -64,15 +70,19 @@ class ServidorBrokerTest {
     void registraProveedorDespuesDeArrancarYAtiendeDosClientesEnParalelo() throws Exception {
         registrarProveedor();
         Future<Respuesta> respuestaClienteUno = enviarEnSegundoPlano(
-                solicitud("productos", "buscar", "arroz"));
+                solicitudBuscar("Refresco"));
         Future<Respuesta> respuestaClienteDos = enviarEnSegundoPlano(
-                solicitud("productos", "consultar", "azucar"));
+                solicitudConsultar("NO-EXISTE"));
 
         Respuesta respuestaUno = respuestaClienteUno.get(5, TimeUnit.SECONDS);
         Respuesta respuestaDos = respuestaClienteDos.get(5, TimeUnit.SECONDS);
 
-        assertEquals("productos.buscar", respuestaUno.getResultado());
-        assertEquals("productos.consultar", respuestaDos.getResultado());
+        assertEquals(EstadoRespuesta.EXITO, respuestaUno.getEstado());
+        assertTrue(respuestaUno.getResultado() instanceof List<?>);
+        assertTrue(!((List<?>) respuestaUno.getResultado()).isEmpty());
+
+        assertEquals(EstadoRespuesta.ERROR_PROVEEDOR, respuestaDos.getEstado());
+        assertEquals("producto no encontrado", respuestaDos.getMensajeError());
     }
 
     private static Future<Respuesta> enviarEnSegundoPlano(Solicitud solicitud) {
@@ -92,8 +102,12 @@ class ServidorBrokerTest {
         }
     }
 
-    private static Solicitud solicitud(String servicio, String operacion, String valor) {
-        return new Solicitud(servicio, operacion, Map.of("valor", valor));
+    private static Solicitud solicitudBuscar(String nombre) {
+        return new Solicitud("productos", "buscar", Map.of("nombre", nombre));
+    }
+
+    private static Solicitud solicitudConsultar(String codigo) {
+        return new Solicitud("productos", "consultar", Map.of("codigo", codigo));
     }
 
     private static void registrarProveedor() throws IOException {
@@ -143,8 +157,7 @@ class ServidorBrokerTest {
              BufferedWriter salida = new BufferedWriter(
                      new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
             Solicitud solicitud = MARSHALLER.solicitudDesde(entrada.readLine());
-            Respuesta respuesta = Respuesta.exito(solicitud,
-                    solicitud.getServicio() + "." + solicitud.getOperacion());
+            Respuesta respuesta = PROVEEDOR.ejecutar(solicitud);
             salida.write(MARSHALLER.aJson(respuesta));
             salida.newLine();
             salida.flush();
