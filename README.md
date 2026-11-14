@@ -70,14 +70,42 @@ docs/
 
 ## Compilar y ejecutar
 
-> Se completa en [#10](../../issues/10) (nivel 2).
-
 El proyecto se ejecuta desde la raíz(donde está `pom.xml`) ya que el archivo `ConexionDB` usa la ruta relativa `data/tienda.db`
 
 ```bash
 mvn clean compile
 mvn test
 ```
+
+### Demo del nivel 2
+
+Ejecuta cada comando desde la raíz del repositorio, donde están `pom.xml` y
+`data/tienda.db`. Abre tres terminales y mantenlas en ese directorio:
+
+**Terminal 1 — broker**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.ServidorBroker"
+```
+
+**Terminal 2 — proveedores**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.NodoProveedores"
+```
+
+El nodo anuncia productos en el puerto `6001`, ventas en `6002` y clientes en
+`6003`. Debe mostrar `Proveedores registrados en el broker.` antes de continuar.
+
+**Terminal 3 — cliente**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.ClienteRemoto"
+```
+
+El cliente ejecuta los casos de registro, localización, operaciones de
+productos/ventas/clientes, servicio desconocido, parámetro inválido, producto
+no encontrado y una solicitud posterior que confirma que el broker sigue activo.
 
 ---
 
