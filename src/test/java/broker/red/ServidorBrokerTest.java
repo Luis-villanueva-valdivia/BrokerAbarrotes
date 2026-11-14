@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +33,7 @@ class ServidorBrokerTest {
     private static final MarshallerJson MARSHALLER = new MarshallerJson();
     private static final ProveedorServicio PROVEEDOR =
             new ServicioProductosMemoria();
+    private static ServidorBroker broker;
     private static Thread hiloBroker;
     private static Thread hiloProveedor;
     private static ServerSocket servidorProveedor;
@@ -44,9 +46,10 @@ class ServidorBrokerTest {
         hiloProveedor = new Thread(ServidorBrokerTest::aceptarProveedores);
         hiloProveedor.setDaemon(true);
         hiloProveedor.start();
+        broker = new ServidorBroker();
         hiloBroker = new Thread(() -> {
             try {
-                ServidorBroker.main(new String[0]);
+                broker.ejecutar();
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
@@ -57,7 +60,13 @@ class ServidorBrokerTest {
     }
 
     @AfterAll
-    static void detenerProveedor() throws IOException {
+    static void detenerProcesos() throws IOException, InterruptedException {
+        if (broker != null) {
+            broker.close();
+        }
+        if (hiloBroker != null) {
+            hiloBroker.join(2000);
+        }
         if (servidorProveedor != null) {
             servidorProveedor.close();
         }
@@ -69,10 +78,16 @@ class ServidorBrokerTest {
     @Test
     void registraProveedorDespuesDeArrancarYAtiendeDosClientesEnParalelo() throws Exception {
         registrarProveedor();
+        CountDownLatch clientesListos = new CountDownLatch(2);
+        CountDownLatch inicioSolicitudes = new CountDownLatch(1);
         Future<Respuesta> respuestaClienteUno = enviarEnSegundoPlano(
+                clientesListos, inicioSolicitudes,
                 solicitudBuscar("Refresco"));
         Future<Respuesta> respuestaClienteDos = enviarEnSegundoPlano(
+                clientesListos, inicioSolicitudes,
                 solicitudConsultar("NO-EXISTE"));
+        assertTrue(clientesListos.await(5, TimeUnit.SECONDS));
+        inicioSolicitudes.countDown();
 
         Respuesta respuestaUno = respuestaClienteUno.get(5, TimeUnit.SECONDS);
         Respuesta respuestaDos = respuestaClienteDos.get(5, TimeUnit.SECONDS);
@@ -85,8 +100,15 @@ class ServidorBrokerTest {
         assertEquals("producto no encontrado", respuestaDos.getMensajeError());
     }
 
-    private static Future<Respuesta> enviarEnSegundoPlano(Solicitud solicitud) {
-        return ejecutorProveedor.submit(() -> enviarSolicitudAlBroker(solicitud));
+    private static Future<Respuesta> enviarEnSegundoPlano(
+            CountDownLatch clientesListos, CountDownLatch inicioSolicitudes, Solicitud solicitud) {
+        return ejecutorProveedor.submit(() -> {
+            clientesListos.countDown();
+            if (!inicioSolicitudes.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Las solicitudes no iniciaron a tiempo");
+            }
+            return enviarSolicitudAlBroker(solicitud);
+        });
     }
 
     private static Respuesta enviarSolicitudAlBroker(Solicitud solicitud) throws IOException {
