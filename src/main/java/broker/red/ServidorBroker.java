@@ -30,29 +30,85 @@ import java.util.concurrent.Executors;
  * línea. El servidor conserva el registro entre conexiones, por lo que un
  * proveedor puede registrarse después de arrancar el broker.</p>
  */
-public final class ServidorBroker {
+public final class ServidorBroker implements AutoCloseable {
 
     public static final int PUERTO = 5000;
     public static final int TIEMPO_CONEXION_MS = 3000;
     public static final int TIEMPO_LECTURA_MS = 10000;
     public static final Path ARCHIVO_BITACORA = Path.of("logs", "broker.log");
 
-    private ServidorBroker() {
+    private final ExecutorService ejecutores = Executors.newCachedThreadPool();
+    private volatile ServerSocket servidor;
+    private volatile Bitacora bitacora;
+    private volatile boolean cerrado;
+
+    /** Crea un servidor listo para iniciar el broker en el puerto configurado. */
+    public ServidorBroker() {
     }
 
     public static void main(String[] args) throws IOException {
+        ServidorBroker servidorBroker = new ServidorBroker();
+        try {
+            servidorBroker.ejecutar();
+        } finally {
+            servidorBroker.close();
+        }
+    }
+
+    /**
+     * Inicia el ciclo de aceptación de conexiones y bloquea hasta cerrar el servidor.
+     *
+     * @throws IOException si no puede abrir la bitácora o el puerto configurado
+     */
+    public void ejecutar() throws IOException {
         RegistroServicios registro = new RegistroServicios();
-        ExecutorService ejecutores = Executors.newCachedThreadPool();
-        try (Bitacora bitacora = new Bitacora(ARCHIVO_BITACORA);
-             ServerSocket servidor = new ServerSocket(PUERTO)) {
-            Broker broker = new Broker(registro, bitacora::escribir);
-            System.out.println("ServidorBroker escuchando en el puerto " + PUERTO);
-            while (!servidor.isClosed()) {
-                Socket conexion = servidor.accept();
+        Bitacora nuevaBitacora = new Bitacora(ARCHIVO_BITACORA);
+        ServerSocket nuevoServidor;
+        try {
+            nuevoServidor = new ServerSocket(PUERTO);
+        } catch (IOException e) {
+            nuevaBitacora.close();
+            throw e;
+        }
+
+        bitacora = nuevaBitacora;
+        servidor = nuevoServidor;
+        Broker broker = new Broker(registro, nuevaBitacora::escribir);
+        System.out.println("ServidorBroker escuchando en el puerto " + PUERTO);
+        try {
+            while (!nuevoServidor.isClosed()) {
+                Socket conexion = nuevoServidor.accept();
                 ejecutores.submit(() -> atender(conexion, broker, registro));
             }
+        } catch (IOException e) {
+            if (!cerrado) {
+                throw e;
+            }
         } finally {
-            ejecutores.shutdown();
+            cerrarRecursos();
+        }
+    }
+
+    /** Detiene el socket de escucha, los hilos de atención y la bitácora. */
+    @Override
+    public void close() {
+        cerrado = true;
+        cerrarRecursos();
+    }
+
+    private synchronized void cerrarRecursos() {
+        if (servidor != null) {
+            try {
+                servidor.close();
+            } catch (IOException e) {
+                System.err.println("[BROKER] No se pudo cerrar el servidor: " + describir(e));
+            }
+            servidor = null;
+        }
+        ejecutores.shutdownNow();
+        if (bitacora != null) {
+            bitacora.close();
+            bitacora = null;
         }
     }
 
