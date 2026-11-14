@@ -70,14 +70,52 @@ docs/
 
 ## Compilar y ejecutar
 
-> Se completa en [#10](../../issues/10) (nivel 2).
-
 El proyecto se ejecuta desde la raíz(donde está `pom.xml`) ya que el archivo `ConexionDB` usa la ruta relativa `data/tienda.db`
 
 ```bash
 mvn clean compile
 mvn test
 ```
+
+### Demo del nivel 2
+
+Ejecuta cada comando desde la raíz del repositorio, donde están `pom.xml` y
+`data/tienda.db`. Abre tres terminales y mantenlas en ese directorio:
+
+**Terminal 1 — broker**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.ServidorBroker"
+```
+
+**Terminal 2 — proveedores**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.NodoProveedores"
+```
+
+El nodo anuncia productos en el puerto `6001`, ventas en `6002`, clientes en
+`6003` y el servicio `prueba` en `6004` (siempre falla; se usa en el caso 7).
+Debe mostrar `Proveedores registrados en el broker.` antes de continuar.
+
+> Si reinicias `NodoProveedores`, reinicia también el broker: el broker no
+> permite volver a registrar un servicio que ya está registrado.
+
+**Terminal 3 — cliente**
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.red.ClienteRemoto"
+```
+
+El cliente ejecuta los 8 casos de `DemoNivel1` por socket: registro,
+localización, una operación por servicio, respuesta exitosa, servicio
+desconocido, parámetro inválido y excepción del proveedor. El caso 8
+(sustitución del proveedor) se demuestra en el nivel 1, porque el broker de red
+no permite volver a registrar un servicio; el cliente solo lo explica. Al final
+agrega un caso extra: producto no encontrado.
+
+Para probar dos clientes a la vez, abre una cuarta terminal y ejecuta el mismo
+comando de la terminal 3 al mismo tiempo.
 
 ---
 
