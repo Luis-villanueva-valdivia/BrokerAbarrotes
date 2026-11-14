@@ -136,6 +136,14 @@ class ServicioVentasTest {
     }
 
     @Test
+    void operacionNulaDevuelveParametroInvalido() {
+        Respuesta respuesta = servicio.ejecutar(new SolicitudOperacionNula());
+
+        assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO, respuesta.getEstado());
+        assertEquals("La operación es obligatoria", respuesta.getMensajeError());
+    }
+
+    @Test
     void operacionDesconocidaDevuelveErrorConMensaje() {
         Respuesta respuesta = ejecutar("eliminar", Map.of());
 
@@ -151,5 +159,16 @@ class ServicioVentasTest {
         return fecha.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    private static class SolicitudOperacionNula extends Solicitud {
+        SolicitudOperacionNula() {
+            super("ventas", "consultar", Map.of());
+        }
+
+        @Override
+        public String getOperacion() {
+            return null;
+        }
     }
 }

@@ -31,6 +31,7 @@ public class ServicioVentas implements ProveedorServicio {
     private static final String MENSAJE_VENTA_NO_ENCONTRADA = "venta no encontrada";
     private static final String MENSAJE_ID_INVALIDO = "El parámetro idVenta debe ser un entero positivo";
     private static final String MENSAJE_FECHA_INVALIDA = "El parámetro fecha debe tener formato yyyy-MM-dd";
+    private static final String MENSAJE_OPERACION_INVALIDA = "La operación es obligatoria";
 
     private final VentaDAO ventaDAO;
 
@@ -57,11 +58,17 @@ public class ServicioVentas implements ProveedorServicio {
         }
 
         try {
-            return switch (solicitud.getOperacion()) {
+            String operacion = solicitud.getOperacion();
+            if (operacion == null || operacion.isBlank()) {
+                return Respuesta.error(solicitud.getId(), EstadoRespuesta.PARAMETRO_INVALIDO,
+                        MENSAJE_OPERACION_INVALIDA);
+            }
+
+            return switch (operacion) {
                 case OPERACION_CONSULTAR -> consultar(solicitud);
                 case OPERACION_TOTAL_DEL_DIA -> totalDelDia(solicitud);
                 default -> Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
-                        "Operación desconocida: " + solicitud.getOperacion());
+                        "Operación desconocida: " + operacion);
             };
         } catch (IllegalArgumentException e) {
             return Respuesta.error(solicitud.getId(), EstadoRespuesta.PARAMETRO_INVALIDO, e.getMessage());
