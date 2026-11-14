@@ -30,16 +30,21 @@ import java.util.concurrent.Executors;
  * <p>Cada proveedor escucha en su propio puerto y se registra dinámicamente
  * con el broker al iniciar. El acceso a los DAO se serializa porque todos
  * comparten la conexión SQLite del proceso.</p>
+ *
+ * <p>También levanta el servicio {@code prueba}, que siempre falla, para
+ * demostrar por red el caso 7 de la demo (excepción del proveedor).</p>
  */
 public final class NodoProveedores {
 
     public static final int PUERTO_PRODUCTOS = 6001;
     public static final int PUERTO_VENTAS = 6002;
     public static final int PUERTO_CLIENTES = 6003;
+    public static final int PUERTO_PRUEBA = 6004;
     public static final int TIEMPO_LECTURA_MS = 10000;
 
     private static final String HOST_POR_DEFECTO = "localhost";
     private static final int PUERTO_BROKER = ServidorBroker.PUERTO;
+    private static final String SERVICIO_PRUEBA = "prueba";
 
     private NodoProveedores() {
     }
@@ -57,17 +62,21 @@ public final class NodoProveedores {
 
         try (ServerSocket productos = new ServerSocket(PUERTO_PRODUCTOS);
              ServerSocket ventas = new ServerSocket(PUERTO_VENTAS);
-             ServerSocket clientes = new ServerSocket(PUERTO_CLIENTES)) {
+             ServerSocket clientes = new ServerSocket(PUERTO_CLIENTES);
+             ServerSocket prueba = new ServerSocket(PUERTO_PRUEBA)) {
             iniciarServidor(productos, new ServicioProductos(new ProductoDAO()),
                     "productos", PUERTO_PRODUCTOS, hostBroker, accesoBaseDatos, ejecutores);
             iniciarServidor(ventas, new ServicioVentas(new VentaDAO()),
                     "ventas", PUERTO_VENTAS, hostBroker, accesoBaseDatos, ejecutores);
             iniciarServidor(clientes, new ServicioClientes(new ClienteDAO()),
                     "clientes", PUERTO_CLIENTES, hostBroker, accesoBaseDatos, ejecutores);
+            iniciarServidor(prueba, new ProveedorQueFalla(),
+                    SERVICIO_PRUEBA, PUERTO_PRUEBA, hostBroker, accesoBaseDatos, ejecutores);
 
             registrar(hostBroker, "productos", PUERTO_PRODUCTOS);
             registrar(hostBroker, "ventas", PUERTO_VENTAS);
             registrar(hostBroker, "clientes", PUERTO_CLIENTES);
+            registrar(hostBroker, SERVICIO_PRUEBA, PUERTO_PRUEBA);
             System.out.println("Proveedores registrados en el broker.");
             new CountDownLatch(1).await();
         } finally {
@@ -128,8 +137,12 @@ public final class NodoProveedores {
             return Respuesta.error(UUID.randomUUID(), EstadoRespuesta.PARAMETRO_INVALIDO,
                     e.getMessage() == null ? "Solicitud inválida" : e.getMessage());
         }
-        synchronized (accesoBaseDatos) {
-            return proveedor.ejecutar(solicitud);
+        try {
+            synchronized (accesoBaseDatos) {
+                return proveedor.ejecutar(solicitud);
+            }
+        } catch (RuntimeException e) {
+            return Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR, describir(e));
         }
     }
 
@@ -155,5 +168,22 @@ public final class NodoProveedores {
 
     private static String describir(Throwable error) {
         return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+    }
+
+    /**
+     * Proveedor de prueba que siempre lanza una excepción, para el caso 7.
+     */
+    private static final class ProveedorQueFalla implements ProveedorServicio {
+
+        /**
+         * Lanza una excepción en lugar de responder.
+         *
+         * @param solicitud solicitud recibida
+         * @return nunca regresa; siempre lanza IllegalStateException
+         */
+        @Override
+        public Respuesta ejecutar(Solicitud solicitud) {
+            throw new IllegalStateException("fallo simulado del proveedor de prueba");
+        }
     }
 }
