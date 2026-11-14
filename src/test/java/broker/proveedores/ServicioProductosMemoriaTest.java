@@ -53,11 +53,19 @@ class ServicioProductosMemoriaTest {
     }
 
     @Test
-    void parametroFaltanteDevuelveParametroInvalido() {
+    void consultarSinCodigoDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("consultar", Map.of()).getEstado());
+    }
+
+    @Test
+    void buscarSinNombreDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("buscar", Map.of()).getEstado());
+    }
+
+    @Test
+    void stockBajoSinUmbralDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("stockBajo", Map.of()).getEstado());
     }
@@ -75,7 +83,15 @@ class ServicioProductosMemoriaTest {
         Respuesta respuesta = ejecutar("consultar", Map.of("codigo", "NO-EXISTE"));
 
         assertEquals(EstadoRespuesta.ERROR_PROVEEDOR, respuesta.getEstado());
-        assertEquals("producto no encontrado", respuesta.getMensajeError());
+        assertEquals(ProveedorProductosUtil.MENSAJE_PRODUCTO_NO_ENCONTRADO, respuesta.getMensajeError());
+    }
+
+    @Test
+    void operacionNulaDevuelveParametroInvalido() {
+        Respuesta respuesta = servicio.ejecutar(new SolicitudOperacionNula());
+
+        assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO, respuesta.getEstado());
+        assertEquals("La operación es obligatoria", respuesta.getMensajeError());
     }
 
     @Test
@@ -99,5 +115,16 @@ class ServicioProductosMemoriaTest {
 
     private Respuesta ejecutar(String operacion, Map<String, String> parametros) {
         return servicio.ejecutar(new Solicitud("productos", operacion, parametros));
+    }
+
+    private static class SolicitudOperacionNula extends Solicitud {
+        SolicitudOperacionNula() {
+            super("productos", "consultar", Map.of());
+        }
+
+        @Override
+        public String getOperacion() {
+            return null;
+        }
     }
 }

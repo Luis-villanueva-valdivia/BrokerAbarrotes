@@ -8,11 +8,9 @@ import broker.comun.Solicitud;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,9 +38,8 @@ class ServicioProductosTest {
         Respuesta respuesta = ejecutar("buscar", Map.of("nombre", "Sabritas"));
 
         assertEquals(EstadoRespuesta.EXITO, respuesta.getEstado());
-        List<?> productos = assertInstanceOf(List.class, respuesta.getResultado());
-        assertFalse(productos.isEmpty());
-        assertTrue(productos.stream()
+        assertInstanceOf(java.util.List.class, respuesta.getResultado());
+        assertTrue(((java.util.List<?>) respuesta.getResultado()).stream()
                 .map(ProductoModel.class::cast)
                 .anyMatch(producto -> producto.getNombre().equalsIgnoreCase("Sabritas")));
     }
@@ -52,16 +49,23 @@ class ServicioProductosTest {
         Respuesta respuesta = ejecutar("stockBajo", Map.of("umbral", "100000"));
 
         assertEquals(EstadoRespuesta.EXITO, respuesta.getEstado());
-        List<?> productos = assertInstanceOf(List.class, respuesta.getResultado());
-        assertEquals(4, productos.size());
+        assertEquals(4, assertInstanceOf(java.util.List.class, respuesta.getResultado()).size());
     }
 
     @Test
-    void parametroFaltanteDevuelveParametroInvalido() {
+    void consultarSinCodigoDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("consultar", Map.of()).getEstado());
+    }
+
+    @Test
+    void buscarSinNombreDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("buscar", Map.of()).getEstado());
+    }
+
+    @Test
+    void stockBajoSinUmbralDevuelveParametroInvalido() {
         assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO,
                 ejecutar("stockBajo", Map.of()).getEstado());
     }
@@ -79,7 +83,15 @@ class ServicioProductosTest {
         Respuesta respuesta = ejecutar("consultar", Map.of("codigo", "NO-EXISTE"));
 
         assertEquals(EstadoRespuesta.ERROR_PROVEEDOR, respuesta.getEstado());
-        assertEquals("producto no encontrado", respuesta.getMensajeError());
+        assertEquals(ProveedorProductosUtil.MENSAJE_PRODUCTO_NO_ENCONTRADO, respuesta.getMensajeError());
+    }
+
+    @Test
+    void operacionNulaDevuelveParametroInvalido() {
+        Respuesta respuesta = servicio.ejecutar(new SolicitudOperacionNula());
+
+        assertEquals(EstadoRespuesta.PARAMETRO_INVALIDO, respuesta.getEstado());
+        assertEquals("La operación es obligatoria", respuesta.getMensajeError());
     }
 
     @Test
@@ -92,5 +104,16 @@ class ServicioProductosTest {
 
     private Respuesta ejecutar(String operacion, Map<String, String> parametros) {
         return servicio.ejecutar(new Solicitud("productos", operacion, parametros));
+    }
+
+    private static class SolicitudOperacionNula extends Solicitud {
+        SolicitudOperacionNula() {
+            super("productos", "consultar", Map.of());
+        }
+
+        @Override
+        public String getOperacion() {
+            return null;
+        }
     }
 }

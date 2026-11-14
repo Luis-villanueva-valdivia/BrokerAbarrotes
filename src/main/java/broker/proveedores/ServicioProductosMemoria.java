@@ -19,14 +19,6 @@ import java.util.UUID;
  */
 public class ServicioProductosMemoria implements ProveedorServicio {
 
-    private static final String OPERACION_CONSULTAR = "consultar";
-    private static final String OPERACION_BUSCAR = "buscar";
-    private static final String OPERACION_STOCK_BAJO = "stockBajo";
-    private static final String PARAMETRO_CODIGO = "codigo";
-    private static final String PARAMETRO_NOMBRE = "nombre";
-    private static final String PARAMETRO_UMBRAL = "umbral";
-    private static final String MENSAJE_PRODUCTO_NO_ENCONTRADO = "producto no encontrado";
-
     private final List<ProductoModel> productos = crearProductos();
 
     /**
@@ -51,12 +43,13 @@ public class ServicioProductosMemoria implements ProveedorServicio {
         }
 
         try {
-            return switch (solicitud.getOperacion()) {
-                case OPERACION_CONSULTAR -> consultar(solicitud);
-                case OPERACION_BUSCAR -> buscar(solicitud);
-                case OPERACION_STOCK_BAJO -> stockBajo(solicitud);
+            String operacion = ProveedorProductosUtil.obtenerOperacion(solicitud);
+            return switch (operacion) {
+                case ProveedorProductosUtil.OPERACION_CONSULTAR -> consultar(solicitud);
+                case ProveedorProductosUtil.OPERACION_BUSCAR -> buscar(solicitud);
+                case ProveedorProductosUtil.OPERACION_STOCK_BAJO -> stockBajo(solicitud);
                 default -> Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
-                        "Operación desconocida: " + solicitud.getOperacion());
+                        "Operación desconocida: " + operacion);
             };
         } catch (IllegalArgumentException e) {
             return Respuesta.error(solicitud.getId(), EstadoRespuesta.PARAMETRO_INVALIDO, e.getMessage());
@@ -69,17 +62,19 @@ public class ServicioProductosMemoria implements ProveedorServicio {
     }
 
     private Respuesta consultar(Solicitud solicitud) {
-        String codigo = obtenerParametro(solicitud, PARAMETRO_CODIGO);
+        String codigo = ProveedorProductosUtil.obtenerParametro(
+                solicitud, ProveedorProductosUtil.PARAMETRO_CODIGO);
         return productos.stream()
                 .filter(producto -> producto.getCodigo().equals(codigo))
                 .findFirst()
                 .map(producto -> Respuesta.exito(solicitud, copiar(producto)))
                 .orElseGet(() -> Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
-                        MENSAJE_PRODUCTO_NO_ENCONTRADO));
+                        ProveedorProductosUtil.MENSAJE_PRODUCTO_NO_ENCONTRADO));
     }
 
     private Respuesta buscar(Solicitud solicitud) {
-        String nombre = obtenerParametro(solicitud, PARAMETRO_NOMBRE).toLowerCase(Locale.ROOT);
+        String nombre = ProveedorProductosUtil.obtenerParametro(
+                solicitud, ProveedorProductosUtil.PARAMETRO_NOMBRE).toLowerCase(Locale.ROOT);
         List<ProductoModel> encontrados = productos.stream()
                 .filter(producto -> producto.getNombre().toLowerCase(Locale.ROOT).contains(nombre))
                 .map(ServicioProductosMemoria::copiar)
@@ -88,33 +83,12 @@ public class ServicioProductosMemoria implements ProveedorServicio {
     }
 
     private Respuesta stockBajo(Solicitud solicitud) {
-        int umbral = obtenerUmbral(solicitud);
+        int umbral = ProveedorProductosUtil.obtenerUmbral(solicitud);
         List<ProductoModel> encontrados = productos.stream()
                 .filter(producto -> producto.getCantidad() < umbral)
                 .map(ServicioProductosMemoria::copiar)
                 .toList();
         return Respuesta.exito(solicitud, encontrados);
-    }
-
-    private static String obtenerParametro(Solicitud solicitud, String nombre) {
-        String valor = solicitud.getParametros().get(nombre);
-        if (valor == null || valor.isBlank()) {
-            throw new IllegalArgumentException("Falta el parámetro obligatorio: " + nombre);
-        }
-        return valor.trim();
-    }
-
-    private static int obtenerUmbral(Solicitud solicitud) {
-        String valor = obtenerParametro(solicitud, PARAMETRO_UMBRAL);
-        try {
-            int umbral = Integer.parseInt(valor);
-            if (umbral < 0) {
-                throw new IllegalArgumentException("El parámetro umbral no puede ser negativo");
-            }
-            return umbral;
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("El parámetro umbral debe ser numérico", e);
-        }
     }
 
     private static List<ProductoModel> crearProductos() {

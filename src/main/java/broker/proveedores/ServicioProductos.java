@@ -20,14 +20,6 @@ import java.util.stream.Collectors;
  */
 public class ServicioProductos implements ProveedorServicio {
 
-    private static final String OPERACION_CONSULTAR = "consultar";
-    private static final String OPERACION_BUSCAR = "buscar";
-    private static final String OPERACION_STOCK_BAJO = "stockBajo";
-    private static final String PARAMETRO_CODIGO = "codigo";
-    private static final String PARAMETRO_NOMBRE = "nombre";
-    private static final String PARAMETRO_UMBRAL = "umbral";
-    private static final String MENSAJE_PRODUCTO_NO_ENCONTRADO = "producto no encontrado";
-
     private final ProductoDAO productoDAO;
 
     /**
@@ -54,12 +46,19 @@ public class ServicioProductos implements ProveedorServicio {
         }
 
         try {
-            return switch (solicitud.getOperacion()) {
-                case OPERACION_CONSULTAR -> consultar(solicitud);
-                case OPERACION_BUSCAR -> buscar(solicitud);
-                case OPERACION_STOCK_BAJO -> stockBajo(solicitud);
+            String operacion = ProveedorProductosUtil.obtenerOperacion(solicitud);
+            if (esOperacionDeBaseDatos(operacion)
+                    && !ProveedorProductosUtil.hayConexionBaseDatos()) {
+                return Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
+                        ProveedorProductosUtil.MENSAJE_SIN_CONEXION);
+            }
+
+            return switch (operacion) {
+                case ProveedorProductosUtil.OPERACION_CONSULTAR -> consultar(solicitud);
+                case ProveedorProductosUtil.OPERACION_BUSCAR -> buscar(solicitud);
+                case ProveedorProductosUtil.OPERACION_STOCK_BAJO -> stockBajo(solicitud);
                 default -> Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
-                        "Operación desconocida: " + solicitud.getOperacion());
+                        "Operación desconocida: " + operacion);
             };
         } catch (IllegalArgumentException e) {
             return Respuesta.error(solicitud.getId(), EstadoRespuesta.PARAMETRO_INVALIDO, e.getMessage());
@@ -72,47 +71,38 @@ public class ServicioProductos implements ProveedorServicio {
     }
 
     private Respuesta consultar(Solicitud solicitud) {
-        String codigo = obtenerParametro(solicitud, PARAMETRO_CODIGO);
+        String codigo = ProveedorProductosUtil.obtenerParametro(
+                solicitud, ProveedorProductosUtil.PARAMETRO_CODIGO);
         List<ProductoModel> productos = productoDAO.getBuscador().buscarPorCodigo(codigo);
         if (productos.isEmpty()) {
+            if (!ProveedorProductosUtil.hayConexionBaseDatos()) {
+                return Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
+                        ProveedorProductosUtil.MENSAJE_SIN_CONEXION);
+            }
             return Respuesta.error(solicitud.getId(), EstadoRespuesta.ERROR_PROVEEDOR,
-                    MENSAJE_PRODUCTO_NO_ENCONTRADO);
+                    ProveedorProductosUtil.MENSAJE_PRODUCTO_NO_ENCONTRADO);
         }
         return Respuesta.exito(solicitud, productos.get(0));
     }
 
     private Respuesta buscar(Solicitud solicitud) {
-        String nombre = obtenerParametro(solicitud, PARAMETRO_NOMBRE);
+        String nombre = ProveedorProductosUtil.obtenerParametro(
+                solicitud, ProveedorProductosUtil.PARAMETRO_NOMBRE);
         List<ProductoModel> productos = productoDAO.getBuscador().buscarPorNombre(nombre);
         return Respuesta.exito(solicitud, productos);
     }
 
     private Respuesta stockBajo(Solicitud solicitud) {
-        int umbral = obtenerUmbral(solicitud);
+        int umbral = ProveedorProductosUtil.obtenerUmbral(solicitud);
         List<ProductoModel> productos = productoDAO.listarTodos().stream()
                 .filter(producto -> producto.getCantidad() < umbral)
                 .collect(Collectors.toList());
         return Respuesta.exito(solicitud, productos);
     }
 
-    private static String obtenerParametro(Solicitud solicitud, String nombre) {
-        String valor = solicitud.getParametros().get(nombre);
-        if (valor == null || valor.isBlank()) {
-            throw new IllegalArgumentException("Falta el parámetro obligatorio: " + nombre);
-        }
-        return valor.trim();
-    }
-
-    private static int obtenerUmbral(Solicitud solicitud) {
-        String valor = obtenerParametro(solicitud, PARAMETRO_UMBRAL);
-        try {
-            int umbral = Integer.parseInt(valor);
-            if (umbral < 0) {
-                throw new IllegalArgumentException("El parámetro umbral no puede ser negativo");
-            }
-            return umbral;
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("El parámetro umbral debe ser numérico", e);
-        }
+    private static boolean esOperacionDeBaseDatos(String operacion) {
+        return ProveedorProductosUtil.OPERACION_CONSULTAR.equals(operacion)
+                || ProveedorProductosUtil.OPERACION_BUSCAR.equals(operacion)
+                || ProveedorProductosUtil.OPERACION_STOCK_BAJO.equals(operacion);
     }
 }
