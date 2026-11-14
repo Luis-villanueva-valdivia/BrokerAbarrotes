@@ -16,9 +16,10 @@ import java.util.Map;
 /**
  * Cliente de demostración del nivel 2.
  *
- * <p>Ejecuta por socket los casos principales de {@code DemoNivel1}, incluidos
- * respuestas exitosas, parámetros inválidos, servicio desconocido y errores
- * de negocio.</p>
+ * <p>Ejecuta por socket los 8 casos de {@code DemoNivel1}. El caso 8
+ * (sustitución del proveedor) se demuestra en el nivel 1, porque el broker de
+ * red no permite volver a registrar un servicio que ya está registrado; aquí
+ * solo se explica. Al final agrega un caso extra: producto no encontrado.</p>
  */
 public final class ClienteRemoto {
 
@@ -67,13 +68,19 @@ public final class ClienteRemoto {
         mostrar(hostBroker, "productos.stockBajo umbral=abc",
                 new Solicitud("productos", "stockBajo", Map.of("umbral", "abc")));
 
-        titulo("Caso 7 · Producto no encontrado");
+        titulo("Caso 7 · Excepción del proveedor");
+        mostrar(hostBroker, "prueba.ejecutar",
+                new Solicitud("prueba", "ejecutar", Map.of()));
+        mostrar(hostBroker, "productos.consultar codigo=CC001 (el broker sigue activo)",
+                new Solicitud("productos", "consultar", Map.of("codigo", "CC001")));
+
+        titulo("Caso 8 · Sustitución del proveedor");
+        System.out.println("Se demuestra en el nivel 1 (DemoNivel1): el broker de red no permite");
+        System.out.println("volver a registrar un servicio que ya está registrado.");
+
+        titulo("Extra · Producto no encontrado");
         mostrar(hostBroker, "productos.consultar codigo=NO-EXISTE",
                 new Solicitud("productos", "consultar", Map.of("codigo", "NO-EXISTE")));
-
-        titulo("Caso 8 · Broker sigue activo");
-        mostrar(hostBroker, "productos.consultar codigo=CC001",
-                new Solicitud("productos", "consultar", Map.of("codigo", "CC001")));
     }
 
     private void mostrar(String hostBroker, String etiqueta, Solicitud solicitud) throws IOException {
