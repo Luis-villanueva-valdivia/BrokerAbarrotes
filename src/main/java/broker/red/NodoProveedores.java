@@ -110,8 +110,17 @@ public final class NodoProveedores {
         }
     }
 
-    private static void atender(Socket conexion, ProveedorServicio proveedor,
-                                String servicio, Object accesoBaseDatos) {
+    /**
+     * Atiende una conexión: lee la solicitud, la ejecuta con el proveedor y responde.
+     * Es visible en el paquete para poder probarlo con proveedores reales.
+     *
+     * @param conexion conexión aceptada
+     * @param proveedor proveedor que ejecuta la solicitud
+     * @param servicio nombre del servicio, para los mensajes de error
+     * @param accesoBaseDatos candado compartido para serializar el acceso a SQLite
+     */
+    static void atender(Socket conexion, ProveedorServicio proveedor,
+                        String servicio, Object accesoBaseDatos) {
         try (Socket socket = conexion;
              BufferedReader entrada = new BufferedReader(
                      new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
