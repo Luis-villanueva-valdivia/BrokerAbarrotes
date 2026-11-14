@@ -30,6 +30,15 @@ public final class ProveedorRemoto implements ProveedorServicio {
     private final int tiempoLecturaMs;
     private final MarshallerJson marshaller;
 
+    /**
+     * Crea un adaptador para un proveedor TCP remoto.
+     *
+     * @param host dirección del proveedor
+     * @param puerto puerto del proveedor
+     * @param tiempoConexionMs tiempo máximo para establecer la conexión
+     * @param tiempoLecturaMs tiempo máximo para recibir la respuesta
+     * @throws IllegalArgumentException si el host, puerto o tiempos son inválidos
+     */
     public ProveedorRemoto(String host, int puerto, int tiempoConexionMs, int tiempoLecturaMs) {
         if (host == null || host.isBlank()) {
             throw new IllegalArgumentException("El host es obligatorio");
@@ -47,6 +56,13 @@ public final class ProveedorRemoto implements ProveedorServicio {
         this.marshaller = new MarshallerJson();
     }
 
+    /**
+     * Envía una solicitud al proveedor remoto y reconstruye su respuesta.
+     *
+     * @param solicitud solicitud que se enviará
+     * @return respuesta del proveedor o un error de comunicación
+     * @throws NullPointerException si la solicitud es nula
+     */
     @Override
     public Respuesta ejecutar(Solicitud solicitud) {
         Objects.requireNonNull(solicitud, "La solicitud es obligatoria");
