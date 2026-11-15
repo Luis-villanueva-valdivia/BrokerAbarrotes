@@ -95,11 +95,12 @@ mvn exec:java "-Dexec.mainClass=broker.red.NodoProveedores"
 ```
 
 El nodo anuncia productos en el puerto `6001`, ventas en `6002`, clientes en
-`6003` y el servicio `prueba` en `6004` (siempre falla; se usa en el caso 7).
+`6003`, el servicio `prueba` en `6004` (siempre falla; se usa en el caso 7) y el
+servicio `lento` en `6005` (tarda 3 s; se usa para demostrar el `TIMEOUT`).
 Debe mostrar `Proveedores registrados en el broker.` antes de continuar.
 
-> Si reinicias `NodoProveedores`, reinicia también el broker: el broker no
-> permite volver a registrar un servicio que ya está registrado.
+> Si reinicias `NodoProveedores`, no hace falta reiniciar el broker: al volver a
+> registrarse, el broker sustituye a los proveedores anteriores.
 
 **Terminal 3 — cliente**
 
@@ -110,12 +111,29 @@ mvn exec:java "-Dexec.mainClass=broker.red.ClienteRemoto"
 El cliente ejecuta los 8 casos de `DemoNivel1` por socket: registro,
 localización, una operación por servicio, respuesta exitosa, servicio
 desconocido, parámetro inválido y excepción del proveedor. El caso 8
-(sustitución del proveedor) se demuestra en el nivel 1, porque el broker de red
-no permite volver a registrar un servicio; el cliente solo lo explica. Al final
-agrega un caso extra: producto no encontrado.
+(sustitución del proveedor) se demuestra en el nivel 1; en el nivel 2 el broker
+sustituye al proveedor cuando `NodoProveedores` se vuelve a registrar, y el
+cliente solo lo explica. Al final agrega dos casos extra: producto no encontrado
+y el proveedor lento, que responde `TIMEOUT` después de 2 reintentos (unos 6 s).
 
 Para probar dos clientes a la vez, abre una cuarta terminal y ejecuta el mismo
 comando de la terminal 3 al mismo tiempo.
+
+### Timeouts, reintentos y desconexiones
+
+El broker espera hasta 2 s la respuesta de cada proveedor y reintenta hasta 2
+veces. Cada reintento queda en la consola del broker y en `logs/broker.log`:
+
+```
+[PROVEEDOR] Reintento 1/2 lento.ejecutar en localhost:6005 estado=TIMEOUT (Read timed out)
+[PROVEEDOR] Reintento 2/2 lento.ejecutar en localhost:6005 estado=TIMEOUT (Read timed out)
+```
+
+- **Proveedor lento:** lo demuestra el último caso del cliente (`TIMEOUT`).
+- **Proveedor apagado:** cierra la terminal 2 y vuelve a correr el cliente. El
+  broker responde `ERROR_PROVEEDOR` después de 2 reintentos y sigue atendiendo;
+  al levantar otra vez `NodoProveedores`, todo vuelve a funcionar sin reiniciar
+  el broker.
 
 ---
 
