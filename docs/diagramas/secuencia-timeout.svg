@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1190" viewBox="0 0 1600 1190"><defs><marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#000" stroke-width="1.3"/></marker><marker id="openS" viewBox="0 0 12 12" refX="1" refY="6" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M11,1 L1,6 L11,11" fill="none" stroke="#000" stroke-width="1.3"/></marker><marker id="block" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 Z" fill="#000"/></marker></defs><rect width="100%" height="100%" fill="#fff"/><text x="700" y="27.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#000" font-weight="bold">Diagrama de secuencia · Solicitud con TIMEOUT (nivel 2): lento.ejecutar</text>
+<rect x="63.0" y="48" width="174.0" height="18" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="150.0" y="60.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">JVM 1 · cliente</text>
+<rect x="253.0" y="48" width="744.0" height="18" fill="#eef7ee" stroke="#000000" stroke-width="1.2"/>
+<text x="625.0" y="60.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">JVM 2 · broker (puerto 5000)</text>
+<rect x="1013.0" y="48" width="364.0" height="18" fill="#fdf6e3" stroke="#000000" stroke-width="1.2"/>
+<text x="1195.0" y="60.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">JVM 3 · NodoProveedores</text>
+<path d="M150,120 L150,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M340,120 L340,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M530,120 L530,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M720,120 L720,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M910,120 L910,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M1100,120 L1100,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M1290,120 L1290,1100" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="6 4"/>
+<rect x="70.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="150.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:ClienteRemoto</text>
+<rect x="260.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="340.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:ServidorBroker</text>
+<rect x="450.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="530.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:Broker</text>
+<rect x="640.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="720.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:RegistroServicios</text>
+<rect x="830.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="910.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:ProveedorRemoto</text>
+<rect x="1020.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="1100.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:NodoProveedores</text>
+<rect x="1210.0" y="74" width="160" height="46" fill="#eef3fb" stroke="#000000" stroke-width="1.2"/>
+<text x="1290.0" y="100.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000">:ProveedorLento</text>
+<rect x="1285" y="580" width="10" height="124" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="1290.0" y="646.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="1095" y="544" width="10" height="212" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="1100.0" y="654.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="905" y="352" width="10" height="500" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="910.0" y="606.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="715" y="284" width="10" height="38" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="720.0" y="307.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="525" y="250" width="10" height="688" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="530.0" y="598.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="335" y="160" width="10" height="812" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="340.0" y="570.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<rect x="145" y="154" width="10" height="880" fill="#dfe8f5" stroke="#000000" stroke-width="1.2"/>
+<text x="150.0" y="598.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#000"></text>
+<path d="M155,160 L335,160" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="245.0" y="141.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">1: Solicitud JSON (:5000)</text><text x="245.0" y="154.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">lento.ejecutar</text>
+<path d="M345,200 L379,200 L379,218 L350,218" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="383.0" y="195.0" width="276.6" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="385" y="206.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">2: atender(...)   [hilo del ExecutorService]</text><text x="385" y="218.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">    marshaller.solicitudDesde(linea): Solicitud</text>
+<path d="M345,250 L525,250" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="435.0" y="244.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">3: enviar(solicitud)</text>
+<path d="M535,284 L715,284" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="625.0" y="278.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">4: buscar("lento")</text>
+<path d="M715,318 L535,318" fill="none" stroke="#000" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="625.0" y="312.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">5: ProveedorRemoto :6005</text>
+<path d="M535,352 L905,352" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="720.0" y="346.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">6: ejecutar(solicitud)</text>
+<path d="M915,446 L949,446 L949,464 L920,464" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="953.0" y="441.0" width="549.2" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="955" y="452.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">7: bitacora.accept(mensajeReintento(...))</text><text x="955" y="464.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">    [PROVEEDOR] Reintento i/2 lento.ejecutar en localhost:6005 estado=TIMEOUT (Read timed out)</text>
+<path d="M915,508 L949,508 L949,526 L920,526" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="953.0" y="509.5" width="439.0" height="15.0" fill="#fff" opacity="0.9"/>
+<text x="955" y="520.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">8: enviar(solicitud): connect(localhost:6005, 3000 ms) · setSoTimeout(2000)</text>
+<path d="M915,544 L1095,544" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="1005.0" y="538.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">9: Solicitud JSON (:6005)</text>
+<path d="M1105,580 L1285,580" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<text x="1195.0" y="574.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">10: ejecutar(solicitud)</text>
+<path d="M1295,610 L1329,610 L1329,628 L1300,628" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="1333.0" y="611.5" width="236.0" height="15.0" fill="#fff" opacity="0.9"/>
+<text x="1335" y="622.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">11: Thread.sleep(DEMORA_LENTO_MS = 3000)</text>
+<path d="M915,650 L949,650 L949,668 L920,668" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="953.0" y="645.0" width="253.4" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="955" y="656.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">12: readLine() no responde en 2000 ms</text><text x="955" y="668.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">     → SocketTimeoutException (ultimoError)</text>
+<path d="M1285,700 L1105,700" fill="none" stroke="#000" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="1195.0" y="681.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">13: Respuesta.exito(…)</text><text x="1195.0" y="694.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">a los 3000 ms</text>
+<path d="M1105,732 L1139,732 L1139,750 L1110,750" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="1143.0" y="727.0" width="288.2" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="1145" y="738.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">14: escribe la respuesta tardía</text><text x="1145" y="750.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">     (el broker ya cerró ese socket: se descarta)</text>
+<rect x="840" y="382" width="748" height="390" fill="none" stroke="#000" stroke-width="1.2"/><path d="M840,402 L888,402 L896,394 L896,382" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="865.0" y="395.9" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000" font-weight="bold">loop</text>
+<rect x="922.0" y="384.9" width="386.8" height="16.3" fill="#fff" opacity="0.9"/>
+<text x="924" y="396.9" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#000">[intento = 0 .. MAX_REINTENTOS]   (1 intento + 2 reintentos)</text>
+<rect x="852" y="408" width="724" height="72" fill="none" stroke="#000" stroke-width="1.2"/><path d="M852,428 L892,428 L900,420 L900,408" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="873.0" y="421.9" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#000" font-weight="bold">opt</text>
+<rect x="922.0" y="410.9" width="86.9" height="16.3" fill="#fff" opacity="0.9"/>
+<text x="924" y="422.9" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#000">[intento &gt; 0]</text>
+<path d="M915,796 L949,796 L949,814 L920,814" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="953.0" y="791.0" width="439.0" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="955" y="802.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">15: Respuesta.error(id, estadoDe(ultimoError) = TIMEOUT,</text><text x="955" y="814.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">     "Sin respuesta del proveedor después de 2 reintentos: Read timed out")</text>
+<path d="M905,848 L535,848" fill="none" stroke="#000" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="720.0" y="842.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">16: Respuesta (TIMEOUT)</text>
+<path d="M535,882 L569,882 L569,900 L540,900" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="573.0" y="877.0" width="375.2" height="28.0" fill="#fff" opacity="0.9"/>
+<text x="575" y="888.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">17: registrarEnBitacora(...)</text><text x="575" y="900.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">     [BROKER] hh:mm:ss id=… lento.ejecutar → TIMEOUT (≈ 6000 ms)</text>
+<path d="M525,934 L345,934" fill="none" stroke="#000" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="435.0" y="928.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">18: Respuesta</text>
+<path d="M335,968 L155,968" fill="none" stroke="#000" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="245.0" y="949.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">19: Respuesta JSON</text><text x="245.0" y="962.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="#000">{estado:"TIMEOUT"}</text>
+<path d="M155,1004 L189,1004 L189,1022 L160,1022" fill="none" stroke="#000" stroke-width="1.2" marker-end="url(#block)"/>
+<rect x="193.0" y="1005.5" width="340.4" height="15.0" fill="#fff" opacity="0.9"/>
+<text x="195" y="1016.5" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">20: mostrar(...): "TIMEOUT · Sin respuesta del proveedor…"</text>
+<path d="M90,1050 L1078,1050 L1090,1062 L1090,1122 L90,1122 Z" fill="#fff8c4" stroke="#000" stroke-width="1"/><path d="M1078,1050 L1078,1062 L1090,1062" fill="none" stroke="#000"/>
+<text x="98" y="1070.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">ProveedorRemoto.ejecutar repite el bloque hasta MAX_REINTENTOS = 2 veces: 3 intentos × 2000 ms ≈ 6 s.</text><text x="98" y="1083.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">SocketTimeoutException → EstadoRespuesta.TIMEOUT; cualquier otra IOException (p. ej. NodoProveedores apagado) → ERROR_PROVEEDOR.</text><text x="98" y="1095.8" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">El broker no se cae: responde al cliente y sigue atendiendo otras conexiones en sus hilos.</text><text x="98" y="1108.2" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#000">El ClienteRemoto espera hasta 10000 ms (TIEMPO_LECTURA_MS), así que sí alcanza a recibir la respuesta TIMEOUT.</text></svg>
