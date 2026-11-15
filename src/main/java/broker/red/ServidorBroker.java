@@ -35,6 +35,12 @@ public final class ServidorBroker implements AutoCloseable {
     public static final int PUERTO = 5000;
     public static final int TIEMPO_CONEXION_MS = 3000;
     public static final int TIEMPO_LECTURA_MS = 10000;
+    /**
+     * Espera máxima por la respuesta de un proveedor en cada intento. Con los
+     * reintentos de {@link ProveedorRemoto} el peor caso es 3 × 2 s, menos que
+     * los 10 s que espera el cliente, así que el cliente alcanza a ver el TIMEOUT.
+     */
+    public static final int TIEMPO_RESPUESTA_PROVEEDOR_MS = 2000;
     public static final Path ARCHIVO_BITACORA = Path.of("logs", "broker.log");
 
     private final ExecutorService ejecutores = Executors.newCachedThreadPool();
@@ -140,7 +146,7 @@ public final class ServidorBroker implements AutoCloseable {
                     MensajeRegistro mensaje = marshaller.registroDesde(linea);
                     // ===== ISS-11 · Configurar reintentos y permitir el re-registro =====
                     ProveedorRemoto proveedor = new ProveedorRemoto(mensaje.host(), mensaje.puerto(),
-                            TIEMPO_CONEXION_MS, TIEMPO_LECTURA_MS, bitacora::escribir);
+                            TIEMPO_CONEXION_MS, TIEMPO_RESPUESTA_PROVEEDOR_MS, bitacora::escribir);
                     registrarProveedor(registro, mensaje.servicio(), proveedor, bitacora);
                     escribir(salida, Respuesta.exito(UUID.randomUUID(), "Servicio registrado"));
                 } else {
