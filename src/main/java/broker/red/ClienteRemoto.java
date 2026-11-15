@@ -17,9 +17,11 @@ import java.util.Map;
  * Cliente de demostración del nivel 2.
  *
  * <p>Ejecuta por socket los 8 casos de {@code DemoNivel1}. El caso 8
- * (sustitución del proveedor) se demuestra en el nivel 1, porque el broker de
- * red no permite volver a registrar un servicio que ya está registrado; aquí
- * solo se explica. Al final agrega un caso extra: producto no encontrado.</p>
+ * (sustitución del proveedor) se demuestra en el nivel 1; en el nivel 2 el
+ * broker sustituye al proveedor cuando {@code NodoProveedores} se vuelve a
+ * registrar, y aquí solo se explica. Al final agrega dos casos extra: producto
+ * no encontrado y un proveedor lento que termina en {@code TIMEOUT} después de
+ * los reintentos.</p>
  */
 public final class ClienteRemoto {
 
@@ -75,12 +77,16 @@ public final class ClienteRemoto {
                 new Solicitud("productos", "consultar", Map.of("codigo", "CC001")));
 
         titulo("Caso 8 · Sustitución del proveedor");
-        System.out.println("Se demuestra en el nivel 1 (DemoNivel1): el broker de red no permite");
-        System.out.println("volver a registrar un servicio que ya está registrado.");
+        System.out.println("Se demuestra en el nivel 1 (DemoNivel1). En el nivel 2, el broker sustituye");
+        System.out.println("al proveedor cuando NodoProveedores se reinicia y se vuelve a registrar.");
 
         titulo("Extra · Producto no encontrado");
         mostrar(hostBroker, "productos.consultar codigo=NO-EXISTE",
                 new Solicitud("productos", "consultar", Map.of("codigo", "NO-EXISTE")));
+
+        titulo("Extra · Proveedor lento (timeout y reintentos)");
+        mostrar(hostBroker, "lento.ejecutar",
+                new Solicitud("lento", "ejecutar", Map.of()));
     }
 
     private void mostrar(String hostBroker, String etiqueta, Solicitud solicitud) throws IOException {
