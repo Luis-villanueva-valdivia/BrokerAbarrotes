@@ -61,21 +61,40 @@ src/main/java/broker/
 ├── red/           MarshallerJson, ServidorBroker, NodoProveedores, ProveedorRemoto, ClienteRemoto
 └── abarrotes/     modelos y DAO copiados del sistema original
 docs/
+├── documento-tecnico.md   documento técnico (arquitectura, protocolo, evidencias, 10 preguntas)
+├── guion-demo.md          guion de la demo de 10 minutos
+├── protocolo.md           mensajes JSON del nivel 2
 ├── convenciones.md
-├── diagramas/
-└── evidencias/
+├── diagramas/             componentes (nivel 1 y 2) y secuencia (éxito y timeout), .svg + .drawio
+└── evidencias/nivel2/     capturas, broker.log y salida de consolas del nivel 2
 ```
 
 ---
 
 ## Compilar y ejecutar
 
-El proyecto se ejecuta desde la raíz(donde está `pom.xml`) ya que el archivo `ConexionDB` usa la ruta relativa `data/tienda.db`
+El proyecto se ejecuta desde la raíz (donde está `pom.xml`), ya que el archivo `ConexionDB` usa la ruta relativa `data/tienda.db`
+
+Requisitos: JDK 17 y Maven 3.9 o superior.
 
 ```bash
+git clone https://github.com/Luis-villanueva-valdivia/BrokerAbarrotes.git
+cd BrokerAbarrotes
 mvn clean compile
 mvn test
 ```
+
+### Demo del nivel 1
+
+Cliente, broker y proveedores en la misma aplicación. Desde la raíz del repositorio:
+
+```bash
+mvn exec:java "-Dexec.mainClass=broker.cliente.DemoNivel1"
+```
+
+Ejecuta los 8 casos: registro, localización, una operación por servicio, respuesta exitosa, servicio desconocido,
+parámetro inválido, excepción del proveedor y sustitución del proveedor. Cada solicitud deja una línea
+`[BROKER] hh:mm:ss id=… servicio.operacion → ESTADO (ms)` en la consola.
 
 ### Demo del nivel 2
 
@@ -140,3 +159,13 @@ veces. Cada reintento queda en la consola del broker y en `logs/broker.log`:
 ## Origen del código
 
 Los modelos y DAO de `broker/abarrotes` vienen del [Sistema de Gestión de Abarrotes](https://github.com/Diego-Ceron/SistemaGestionAbarrotes) de Diego Cerón y su equipo, en la versión [`v1.0-original`](https://github.com/Luis-villanueva-valdivia/SistemaGestionAbarrotes/releases/tag/v1.0-original), antes de la refactorización que se hace en Construcción de Software.
+
+---
+
+## Documentación
+
+- [Documento técnico](docs/documento-tecnico.md)
+- [Diagramas](docs/diagramas/README.md)
+- [Evidencias del nivel 2](docs/evidencias/nivel2/README.md)
+- [Protocolo JSON](docs/protocolo.md)
+- [Guion de la demo](docs/guion-demo.md)
