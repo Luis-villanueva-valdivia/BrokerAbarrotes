@@ -32,7 +32,9 @@ import java.util.concurrent.Executors;
  * comparten la conexión SQLite del proceso.</p>
  *
  * <p>También levanta el servicio {@code prueba}, que siempre falla, para
- * demostrar por red el caso 7 de la demo (excepción del proveedor).</p>
+ * demostrar por red el caso 7 de la demo (excepción del proveedor), y el
+ * servicio {@code lento}, que tarda más que el límite del broker, para
+ * demostrar el {@code TIMEOUT} y los reintentos.</p>
  */
 public final class NodoProveedores {
 
@@ -40,11 +42,15 @@ public final class NodoProveedores {
     public static final int PUERTO_VENTAS = 6002;
     public static final int PUERTO_CLIENTES = 6003;
     public static final int PUERTO_PRUEBA = 6004;
+    public static final int PUERTO_LENTO = 6005;
+    /** Demora del proveedor lento; supera {@link ServidorBroker#TIEMPO_RESPUESTA_PROVEEDOR_MS}. */
+    public static final int DEMORA_LENTO_MS = 3000;
     public static final int TIEMPO_LECTURA_MS = 10000;
 
     private static final String HOST_POR_DEFECTO = "localhost";
     private static final int PUERTO_BROKER = ServidorBroker.PUERTO;
     private static final String SERVICIO_PRUEBA = "prueba";
+    private static final String SERVICIO_LENTO = "lento";
 
     private NodoProveedores() {
     }
@@ -63,7 +69,8 @@ public final class NodoProveedores {
         try (ServerSocket productos = new ServerSocket(PUERTO_PRODUCTOS);
              ServerSocket ventas = new ServerSocket(PUERTO_VENTAS);
              ServerSocket clientes = new ServerSocket(PUERTO_CLIENTES);
-             ServerSocket prueba = new ServerSocket(PUERTO_PRUEBA)) {
+             ServerSocket prueba = new ServerSocket(PUERTO_PRUEBA);
+             ServerSocket lento = new ServerSocket(PUERTO_LENTO)) {
             iniciarServidor(productos, new ServicioProductos(new ProductoDAO()),
                     "productos", PUERTO_PRODUCTOS, hostBroker, accesoBaseDatos, ejecutores);
             iniciarServidor(ventas, new ServicioVentas(new VentaDAO()),
@@ -72,11 +79,15 @@ public final class NodoProveedores {
                     "clientes", PUERTO_CLIENTES, hostBroker, accesoBaseDatos, ejecutores);
             iniciarServidor(prueba, new ProveedorQueFalla(),
                     SERVICIO_PRUEBA, PUERTO_PRUEBA, hostBroker, accesoBaseDatos, ejecutores);
+            // El proveedor lento no usa la base: su propio candado evita frenar a los demás.
+            iniciarServidor(lento, new ProveedorLento(),
+                    SERVICIO_LENTO, PUERTO_LENTO, hostBroker, new Object(), ejecutores);
 
             registrar(hostBroker, "productos", PUERTO_PRODUCTOS);
             registrar(hostBroker, "ventas", PUERTO_VENTAS);
             registrar(hostBroker, "clientes", PUERTO_CLIENTES);
             registrar(hostBroker, SERVICIO_PRUEBA, PUERTO_PRUEBA);
+            registrar(hostBroker, SERVICIO_LENTO, PUERTO_LENTO);
             System.out.println("Proveedores registrados en el broker.");
             new CountDownLatch(1).await();
         } finally {
@@ -193,6 +204,28 @@ public final class NodoProveedores {
         @Override
         public Respuesta ejecutar(Solicitud solicitud) {
             throw new IllegalStateException("fallo simulado del proveedor de prueba");
+        }
+    }
+
+    /**
+     * Proveedor de prueba que tarda más que el límite del broker, para demostrar el TIMEOUT.
+     */
+    private static final class ProveedorLento implements ProveedorServicio {
+
+        /**
+         * Espera {@link #DEMORA_LENTO_MS} y después responde con éxito.
+         *
+         * @param solicitud solicitud recibida
+         * @return respuesta exitosa, que el broker ya no alcanza a esperar
+         */
+        @Override
+        public Respuesta ejecutar(Solicitud solicitud) {
+            try {
+                Thread.sleep(DEMORA_LENTO_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return Respuesta.exito(solicitud, "respuesta tardía del proveedor lento");
         }
     }
 }
