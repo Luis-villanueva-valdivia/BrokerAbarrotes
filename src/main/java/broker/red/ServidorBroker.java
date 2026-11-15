@@ -5,8 +5,8 @@ import broker.broker.RegistroServicios;
 import broker.comun.EstadoRespuesta;
 import broker.comun.Respuesta;
 import broker.comun.Solicitud;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -46,6 +46,12 @@ public final class ServidorBroker implements AutoCloseable {
     public ServidorBroker() {
     }
 
+    /**
+     * Inicia el servidor distribuido.
+     *
+     * @param args argumentos de ejecución; no se requieren
+     * @throws IOException si no puede abrir la bitácora o el puerto configurado
+     */
     public static void main(String[] args) throws IOException {
         ServidorBroker servidorBroker = new ServidorBroker();
         try {
@@ -78,7 +84,8 @@ public final class ServidorBroker implements AutoCloseable {
         try {
             while (!nuevoServidor.isClosed()) {
                 Socket conexion = nuevoServidor.accept();
-                ejecutores.submit(() -> atender(conexion, broker, registro));
+                // ===== ISS-11 · Compartir bitácora con los proveedores remotos =====
+                ejecutores.submit(() -> atender(conexion, broker, registro, nuevaBitacora));
             }
         } catch (IOException e) {
             if (!cerrado) {
@@ -112,7 +119,8 @@ public final class ServidorBroker implements AutoCloseable {
         }
     }
 
-    private static void atender(Socket conexion, Broker broker, RegistroServicios registro) {
+    private static void atender(Socket conexion, Broker broker, RegistroServicios registro,
+                                Bitacora bitacora) {
         try (Socket socket = conexion;
              BufferedReader entrada = new BufferedReader(
                      new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -130,9 +138,10 @@ public final class ServidorBroker implements AutoCloseable {
                 MarshallerJson marshaller = new MarshallerJson();
                 if (esRegistro(linea)) {
                     MensajeRegistro mensaje = marshaller.registroDesde(linea);
-                    registro.registrar(mensaje.servicio(),
-                            new ProveedorRemoto(mensaje.host(), mensaje.puerto(),
-                                    TIEMPO_CONEXION_MS, TIEMPO_LECTURA_MS));
+                    // ===== ISS-11 · Configurar reintentos y permitir el re-registro =====
+                    ProveedorRemoto proveedor = new ProveedorRemoto(mensaje.host(), mensaje.puerto(),
+                            TIEMPO_CONEXION_MS, TIEMPO_LECTURA_MS, bitacora::escribir);
+                    registrarProveedor(registro, mensaje.servicio(), proveedor, bitacora);
                     escribir(salida, Respuesta.exito(UUID.randomUUID(), "Servicio registrado"));
                 } else {
                     Solicitud solicitud = marshaller.solicitudDesde(linea);
@@ -144,6 +153,21 @@ public final class ServidorBroker implements AutoCloseable {
             }
         } catch (IOException e) {
             System.err.println("[BROKER] Error de conexión: " + describir(e));
+        }
+    }
+
+    // ===== ISS-11 · Aceptar el nuevo registro cuando NodoProveedores se reinicia =====
+    /**
+     * Registra el proveedor por primera vez o sustituye al anterior cuando el nodo se reinicia.
+     */
+    private static void registrarProveedor(RegistroServicios registro, String servicio,
+                                           ProveedorRemoto proveedor, Bitacora bitacora) {
+        try {
+            registro.registrar(servicio, proveedor);
+            bitacora.escribir("[BROKER] Servicio '" + servicio + "' registrado");
+        } catch (IllegalStateException e) {
+            registro.sustituir(servicio, proveedor);
+            bitacora.escribir("[BROKER] Servicio '" + servicio + "' actualizado por nuevo registro");
         }
     }
 
